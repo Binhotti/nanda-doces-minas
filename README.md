@@ -24,7 +24,7 @@ Defina no `.env.local`:
 
 No desenvolvimento local, o catálogo usa SQLite em `data/products.sqlite` e as fotos ficam em `public/uploads/`. Ambos estão fora do Git. A logo fornecida está em `public/brand/logo.png`.
 
-Na Vercel, o catálogo e as fotos usam um Vercel Blob privado conectado ao projeto. Configure `ADMIN_PASSWORD`, `SESSION_SECRET` e `NEXT_PUBLIC_WHATSAPP_NUMBER` nas variáveis de ambiente da Vercel; a conexão com o Blob fornece `BLOB_READ_WRITE_TOKEN`. O painel fica desativado até que o armazenamento e as credenciais estejam configurados. O arquivo SQLite local não é migrado automaticamente para a nuvem.
+Na Vercel, o catálogo e as fotos usam um Vercel Blob privado conectado ao projeto. Configure `ADMIN_PASSWORD`, `SESSION_SECRET` e `NEXT_PUBLIC_WHATSAPP_NUMBER` nas variáveis de ambiente da Vercel; a conexão com o Blob fornece `BLOB_STORE_ID` e autenticação OIDC sem chave estática. O painel fica desativado até que o armazenamento e as credenciais estejam configurados. O arquivo SQLite local não é migrado automaticamente para a nuvem.
 
 ## Comandos
 

@@ -9,7 +9,7 @@ function signature(value: string) {
 }
 
 export function credentialsConfigured() {
-  return Boolean(process.env.ADMIN_PASSWORD && process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32 && (!process.env.VERCEL || process.env.BLOB_READ_WRITE_TOKEN));
+  return Boolean(process.env.ADMIN_PASSWORD && process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32 && (!process.env.VERCEL || process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN));
 }
 
 export function passwordMatches(password: string) {

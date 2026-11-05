@@ -18,9 +18,10 @@ export type Product = {
 
 const onVercel = Boolean(process.env.VERCEL);
 const catalogPath = "catalog/products.json";
+const cloudStorageReady = Boolean(process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN);
 
 async function readCloudProducts(): Promise<Product[]> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return [];
+  if (!cloudStorageReady) return [];
   const result = await get(catalogPath, { access: "private", useCache: false });
   if (!result?.stream) return [];
   const products: unknown = await new Response(result.stream).json();
@@ -29,7 +30,7 @@ async function readCloudProducts(): Promise<Product[]> {
 }
 
 async function writeCloudProducts(products: Product[]) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) throw new Error("Armazenamento do catálogo não configurado.");
+  if (!cloudStorageReady) throw new Error("Armazenamento do catálogo não configurado.");
   await put(catalogPath, JSON.stringify(products), {
     access: "private", allowOverwrite: true, contentType: "application/json"
   });
