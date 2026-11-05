@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { ArrowDown, ArrowRight, Check, Heart, Menu, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import type { Product } from "@/lib/products";
@@ -63,7 +64,10 @@ export default function Storefront({ products, catalogPage = false }: { products
         <div className="hero-art"><div className="hero-art-inner">{featured ? <img src={featured.image} alt={featured.title} /> : <img src="/brand/logo.png" alt="Logo da Nanda Doces de Minas" />}</div><span className="hero-art-caption">NANDA DOCES DE MINAS · SABOR QUE CONQUISTA</span></div>
       </section>}
 
-      {!catalogPage && <section className="intro" id="historia"><div className="section-index">01 / A ESSÊNCIA</div><div><span className="eyebrow">UM CONVITE PARA SENTIR</span><h2>Um toque de Minas em cada <em>momento.</em></h2></div><p>A Nanda Doces de Minas celebra o prazer de presentear, compartilhar e saborear. Uma seleção de doces para escolher com calma e pedir de um jeito simples.</p></section>}
+      {!catalogPage && <section className="founder" id="historia">
+        <div className="founder-photo"><Image src="/brand/nanda-retrato.png" alt="Nanda, à frente da Nanda Doces de Minas" fill sizes="(max-width: 760px) 100vw, 48vw" className="founder-image" /><span className="founder-photo-fade" aria-hidden="true" /></div>
+        <div className="founder-copy"><span className="section-index">01 / A ESSÊNCIA</span><span className="eyebrow">PRAZER, NANDA</span><h2>O carinho tem <em>nome.</em></h2><p>Conheça a Nanda, o rosto por trás da marca. Doces para celebrar, presentear e transformar pequenos momentos em boas lembranças.</p><div className="founder-signature">Nanda <span>♡</span></div><a className="text-link" href="#catalogo">Descubra os doces <ArrowRight size={16} /></a></div>
+      </section>}
 
       <section className={catalogPage ? "catalog catalog-page" : "catalog"} id="catalogo"><div className="catalog-heading"><div><span className="eyebrow">{catalogPage ? "CATÁLOGO COMPLETO" : "ESCOLHA SEUS FAVORITOS"}</span><h2>{catalogPage ? <>Todos os nossos <em>doces.</em></> : <>Doces para se <em>encantar.</em></>}</h2></div><p>Explore o catálogo e monte seu pedido. A Nanda confirma todos os detalhes diretamente com você.</p></div>
         {products.length > 0 ? <>{catalogPage && <div className="category-list" role="tablist" aria-label="Categorias">{categories.map((item) => <button key={item} role="tab" aria-selected={category === item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div>}<div className="product-grid">{visible.map((product) => <article className="product-card" key={product.id}><div className="product-image">{product.image ? <img src={product.image} alt={product.title} /> : <div className="product-image-empty"><span>♡</span>Nanda Doces de Minas</div>}{product.promoPrice && <span className="product-badge">Oferta especial</span>}</div><div className="product-body"><div><span className="product-category">{product.category}</span><h3>{product.title}</h3><p>{product.description}</p></div><div className="product-bottom"><div className="price">{product.promoPrice && <s>{money(product.price)}</s>}<strong>{money(product.promoPrice ?? product.price)}</strong></div><button onClick={() => addToCart(product)} aria-label={`Adicionar ${product.title} ao pedido`}><Plus size={19}/></button></div></div></article>)}</div></> : <div className="catalog-empty"><div className="empty-monogram">N</div><div><span className="eyebrow">EM PREPARAÇÃO</span><h3>Algo doce está chegando.</h3><p>O catálogo será apresentado aqui em breve. Enquanto isso, a Nanda prepara cada detalhe com carinho.</p></div></div>}
