@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowRight, Check, Heart, Menu, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import type { Product } from "@/lib/products";
 
 type CartLine = { id: number; quantity: number };
@@ -72,6 +73,8 @@ export default function Storefront({ products }: { products: Product[] }) {
       <section className="closing"><span className="eyebrow">NANDA DOCES DE MINAS</span><h2>Tem sempre um motivo para celebrar o <em>doce</em> da vida.</h2><a className="button button-light" href="#catalogo">Escolher meus doces <ArrowRight size={17}/></a></section>
     </main>
     <footer><div className="footer-main"><a className="brand" href="#inicio"><span className="brand-mark">N</span><span><strong>Nanda</strong><small>DOCES DE MINAS</small></span></a><p>Sabor que conquista.</p><a href="#inicio">Voltar ao início ↑</a></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Nanda Doces de Minas</span><span>Feito com carinho em cada detalhe ♡</span></div></footer>
+
+    {phone && <a className="whatsapp-float" href={`https://wa.me/${phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" aria-label="Conversar com a Nanda pelo WhatsApp" title="Conversar pelo WhatsApp"><SiWhatsapp size={31}/></a>}
 
     {notice && <div className="toast" role="status"><Check size={16}/>{notice}</div>}
     {cartOpen && <div className="drawer-layer"><div className="drawer-backdrop" onClick={() => setCartOpen(false)} /><aside className="cart-drawer" aria-label="Meu pedido"><div className="drawer-head"><div><span className="eyebrow">SELEÇÃO ESPECIAL</span><h2>Meu pedido <span>({count})</span></h2></div><button className="icon-button" aria-label="Fechar pedido" onClick={() => setCartOpen(false)}><X/></button></div>{lines.length ? <><div className="cart-lines">{lines.map(({ product, quantity }) => <div className="cart-line" key={product.id}><div className="cart-thumb">{product.image ? <img src={product.image} alt=""/> : <span>N</span>}</div><div className="cart-line-info"><h3>{product.title}</h3><span>{money(product.promoPrice ?? product.price)}</span><div className="quantity"><button onClick={() => changeQuantity(product.id, -1)} aria-label={`Diminuir ${product.title}`}>{quantity === 1 ? <Trash2 size={13}/> : <Minus size={13}/>}</button><b>{quantity}</b><button onClick={() => changeQuantity(product.id, 1)} aria-label={`Aumentar ${product.title}`}><Plus size={13}/></button></div></div><strong>{money((product.promoPrice ?? product.price) * quantity)}</strong></div>)}</div><div className="drawer-foot"><div className="total"><span>Total estimado</span><strong>{money(total)}</strong></div><p>Disponibilidade, entrega e pagamento serão confirmados no WhatsApp.</p>{phone ? <a className="button button-dark checkout" href={whatsappUrl} target="_blank" rel="noopener noreferrer">Enviar pelo WhatsApp <ArrowRight size={18}/></a> : <button className="button button-dark checkout" disabled>WhatsApp em configuração</button>}</div></> : <div className="cart-empty"><ShoppingBag size={40}/><h3>Seu pedido começa aqui.</h3><p>Escolha seus doces favoritos no catálogo.</p><button className="button button-dark" onClick={() => setCartOpen(false)}>Explorar os doces <ArrowRight size={16}/></button></div>}</aside></div>}
