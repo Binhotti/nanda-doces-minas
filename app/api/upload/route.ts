@@ -3,6 +3,7 @@ import { isAdmin } from "@/lib/auth";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { put } from "@vercel/blob";
 
 export const runtime = "nodejs";
 
@@ -19,9 +20,14 @@ export async function POST(request: Request) {
   const webp = bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP";
   const extension = jpg ? "jpg" : png ? "png" : webp ? "webp" : null;
   if (!extension) return NextResponse.json({ error: "Use JPG, PNG ou WebP." }, { status: 400 });
+  const filename = `${randomUUID()}.${extension}`;
+  if (process.env.VERCEL) {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) return NextResponse.json({ error: "Armazenamento de imagens não configurado." }, { status: 503 });
+    await put(`images/${filename}`, bytes, { access: "private", contentType: extension === "jpg" ? "image/jpeg" : `image/${extension}` });
+    return NextResponse.json({ url: `/api/images/${filename}` });
+  }
   const dir = path.join(process.cwd(), "public", "uploads");
   await mkdir(dir, { recursive: true });
-  const filename = `${randomUUID()}.${extension}`;
   await writeFile(path.join(dir, filename), bytes);
   return NextResponse.json({ url: `/uploads/${filename}` });
 }

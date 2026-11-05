@@ -1,6 +1,6 @@
 # Nanda Doces de Minas
 
-Landing page em Next.js com catálogo de doces, carrinho e envio do pedido completo pelo WhatsApp. A área `/admin` permite cadastrar, editar, ocultar, destacar e excluir produtos, além de definir preço promocional e enviar fotos.
+Landing page em Next.js com catálogo de doces, carrinho e envio do pedido completo pelo WhatsApp. A página `/produtos` mostra o catálogo completo. A área `/admin` permite cadastrar, editar, ocultar, destacar e excluir produtos, além de definir preço promocional e enviar fotos.
 
 ## Começar
 
@@ -22,9 +22,9 @@ Defina no `.env.local`:
 
 ## Dados e imagens
 
-O catálogo usa SQLite em `data/products.sqlite`. As fotos enviadas pelo painel ficam em `public/uploads/`. Ambos estão fora do Git para proteger os dados e evitar arquivos grandes no repositório. A logo fornecida está em `public/brand/logo.png`.
+No desenvolvimento local, o catálogo usa SQLite em `data/products.sqlite` e as fotos ficam em `public/uploads/`. Ambos estão fora do Git. A logo fornecida está em `public/brand/logo.png`.
 
-Esta primeira versão está pronta para desenvolvimento local. Antes de publicar em uma hospedagem sem disco persistente, migre o catálogo e os uploads para um banco e armazenamento duráveis, como PostgreSQL e armazenamento de objetos. Configure as variáveis de ambiente na hospedagem e faça backup dos dados.
+Na Vercel, o catálogo e as fotos usam um Vercel Blob privado conectado ao projeto. Configure `ADMIN_PASSWORD`, `SESSION_SECRET` e `NEXT_PUBLIC_WHATSAPP_NUMBER` nas variáveis de ambiente da Vercel; a conexão com o Blob fornece `BLOB_READ_WRITE_TOKEN`. O painel fica desativado até que o armazenamento e as credenciais estejam configurados. O arquivo SQLite local não é migrado automaticamente para a nuvem.
 
 ## Comandos
 

@@ -7,5 +7,5 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const authenticated = await isAdmin();
-  return <AdminPanel authenticated={authenticated} configured={credentialsConfigured()} initialProducts={authenticated ? listProducts(true) : []} />;
+  return <AdminPanel authenticated={authenticated} configured={credentialsConfigured()} initialProducts={authenticated ? await listProducts(true) : []} />;
 }
