@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
+import { optimizeImage } from "@/lib/images";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -18,16 +19,24 @@ export async function POST(request: Request) {
   const jpg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
   const png = bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
   const webp = bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP";
-  const extension = jpg ? "jpg" : png ? "png" : webp ? "webp" : null;
-  if (!extension) return NextResponse.json({ error: "Use JPG, PNG ou WebP." }, { status: 400 });
-  const filename = `${randomUUID()}.${extension}`;
-  if (process.env.VERCEL) {
-    if (!process.env.BLOB_STORE_ID && !process.env.BLOB_READ_WRITE_TOKEN) return NextResponse.json({ error: "Armazenamento de imagens não configurado." }, { status: 503 });
-    await put(`images/${filename}`, bytes, { access: "private", contentType: extension === "jpg" ? "image/jpeg" : `image/${extension}` });
+  if (!jpg && !png && !webp) return NextResponse.json({ error: "Use JPG, PNG ou WebP." }, { status: 400 });
+
+  const useBlob = Boolean(process.env.VERCEL);
+  if (useBlob && !process.env.BLOB_STORE_ID && !process.env.BLOB_READ_WRITE_TOKEN) {
+    return NextResponse.json({ error: "Armazenamento de imagens não configurado." }, { status: 503 });
+  }
+
+  // Toda imagem enviada é redimensionada e convertida para WebP antes de ser salva.
+  const optimized = await optimizeImage(bytes);
+  if (!optimized) return NextResponse.json({ error: "Não foi possível processar a imagem. Tente outro arquivo." }, { status: 400 });
+
+  const filename = `${randomUUID()}.webp`;
+  if (useBlob) {
+    await put(`images/${filename}`, optimized.buffer, { access: "private", contentType: "image/webp" });
     return NextResponse.json({ url: `/api/images/${filename}` });
   }
   const dir = path.join(process.cwd(), "public", "uploads");
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, filename), bytes);
+  await writeFile(path.join(dir, filename), optimized.buffer);
   return NextResponse.json({ url: `/uploads/${filename}` });
 }
