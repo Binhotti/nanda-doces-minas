@@ -72,6 +72,10 @@ export async function listProducts(includeInactive = false): Promise<Product[]> 
   return rows.map((row) => normalize(row as Record<string, unknown>));
 }
 
+export async function homeProductCount(excludeId?: number): Promise<number> {
+  return (await listProducts(true)).filter((p) => p.featured && p.active && p.id !== excludeId).length;
+}
+
 export async function getProduct(id: number): Promise<Product | null> {
   if (onVercel) return (await readCloudProducts()).find((p) => p.id === id) ?? null;
   const row = db().prepare("SELECT * FROM products WHERE id = ?").get(id);

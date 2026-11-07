@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
-import { deleteProduct, getProduct, parseProductInput, saveProduct } from "@/lib/products";
+import { HOME_LIMIT_MESSAGE, MAX_HOME_PRODUCTS } from "@/lib/home";
+import { deleteProduct, getProduct, homeProductCount, parseProductInput, saveProduct } from "@/lib/products";
 
 export const runtime = "nodejs";
 
@@ -12,6 +13,7 @@ export async function PUT(request: Request, context: Context) {
   if (!Number.isInteger(id) || !(await getProduct(id))) return NextResponse.json({ error: "Produto não encontrado." }, { status: 404 });
   const input = parseProductInput(await request.json().catch(() => null));
   if (!input) return NextResponse.json({ error: "Confira título, preço e promoção." }, { status: 400 });
+  if (input.featured && input.active && (await homeProductCount(id)) >= MAX_HOME_PRODUCTS) return NextResponse.json({ error: HOME_LIMIT_MESSAGE }, { status: 409 });
   return NextResponse.json(await saveProduct(input, id));
 }
 
