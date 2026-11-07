@@ -9,3 +9,4 @@
 .product-card .product-image{background:#fff}.product-card .product-image img{object-fit:contain;padding:18px}
 
 .hero-art-inner,.cart-thumb{position:relative}
+.product-bottom{gap:12px}.product-bottom .add-to-cart{width:auto;height:auto;padding:12px 16px;display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;cursor:pointer}

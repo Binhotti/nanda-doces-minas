@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { ArrowDown, ArrowRight, Check, Heart, Menu, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowRight, Heart, Menu, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import type { Product } from "@/lib/products";
 
@@ -15,7 +15,6 @@ export default function Storefront({ products, catalogPage = false }: { products
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [category, setCategory] = useState("Todos");
-  const [notice, setNotice] = useState("");
   useEffect(() => {
     try { setCart(JSON.parse(localStorage.getItem("nanda-cart") || "[]")); } catch { /* ignore old cart */ }
   }, []);
@@ -37,8 +36,7 @@ export default function Storefront({ products, catalogPage = false }: { products
 
   function addToCart(product: Product) {
     changeQuantity(product.id, 1);
-    setNotice(`${product.title} adicionado ao pedido`);
-    window.setTimeout(() => setNotice(""), 2800);
+    setCartOpen(true);
   }
 
   const message = useMemo(() => {
@@ -69,7 +67,7 @@ export default function Storefront({ products, catalogPage = false }: { products
       </section>}
 
       <section className={catalogPage ? "catalog catalog-page" : "catalog"} id="catalogo"><div className="catalog-heading"><div><span className="eyebrow">{catalogPage ? "CATÁLOGO COMPLETO" : "ESCOLHA SEUS FAVORITOS"}</span><h2>{catalogPage ? <>Todos os nossos <em>doces.</em></> : <>Doces para se <em>encantar.</em></>}</h2></div><p>Explore o catálogo e monte seu pedido. A Nanda confirma todos os detalhes diretamente com você.</p></div>
-        {products.length > 0 ? <>{catalogPage && <div className="category-list" role="tablist" aria-label="Categorias">{categories.map((item) => <button key={item} role="tab" aria-selected={category === item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div>}<div className="product-grid">{visible.map((product) => <article className="product-card" key={product.id}><div className="product-image">{product.image ? <Image src={product.image} alt={product.title} fill sizes="(max-width: 760px) 100vw, (max-width: 1000px) 50vw, 33vw" /> : <div className="product-image-empty"><span>♡</span>Nanda Doces de Minas</div>}{product.promoPrice && <span className="product-badge">Oferta especial</span>}</div><div className="product-body"><div><span className="product-category">{product.category}</span><h3>{product.title}</h3><p>{product.description}</p></div><div className="product-bottom"><div className="price">{product.promoPrice && <s>{money(product.price)}</s>}<strong>{money(product.promoPrice ?? product.price)}</strong></div><button onClick={() => addToCart(product)} aria-label={`Adicionar ${product.title} ao pedido`}><Plus size={19}/></button></div></div></article>)}</div></> : <div className="catalog-empty"><div className="empty-monogram">N</div><div><span className="eyebrow">EM PREPARAÇÃO</span><h3>Algo doce está chegando.</h3><p>O catálogo será apresentado aqui em breve. Enquanto isso, a Nanda prepara cada detalhe com carinho.</p></div></div>}
+        {products.length > 0 ? <>{catalogPage && <div className="category-list" role="tablist" aria-label="Categorias">{categories.map((item) => <button key={item} role="tab" aria-selected={category === item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div>}<div className="product-grid">{visible.map((product) => <article className="product-card" key={product.id}><div className="product-image">{product.image ? <Image src={product.image} alt={product.title} fill sizes="(max-width: 760px) 100vw, (max-width: 1000px) 50vw, 33vw" /> : <div className="product-image-empty"><span>♡</span>Nanda Doces de Minas</div>}{product.promoPrice && <span className="product-badge">Oferta especial</span>}</div><div className="product-body"><div><span className="product-category">{product.category}</span><h3>{product.title}</h3><p>{product.description}</p></div><div className="product-bottom"><div className="price">{product.promoPrice && <s>{money(product.price)}</s>}<strong>{money(product.promoPrice ?? product.price)}</strong></div><button className="add-to-cart" onClick={() => addToCart(product)} aria-label={`Adicionar ${product.title} ao carrinho`}><ShoppingBag size={16}/>Adicionar ao carrinho</button></div></div></article>)}</div></> : <div className="catalog-empty"><div className="empty-monogram">N</div><div><span className="eyebrow">EM PREPARAÇÃO</span><h3>Algo doce está chegando.</h3><p>O catálogo será apresentado aqui em breve. Enquanto isso, a Nanda prepara cada detalhe com carinho.</p></div></div>}
         {!catalogPage && <div className="catalog-more"><a className="button button-dark" href="/produtos">Ver mais produtos <ArrowRight size={17}/></a></div>}
       </section>
 
@@ -80,7 +78,6 @@ export default function Storefront({ products, catalogPage = false }: { products
 
     {phone && <a className="whatsapp-float" href={`https://wa.me/${phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" aria-label="Conversar com a Nanda pelo WhatsApp" title="Conversar pelo WhatsApp"><SiWhatsapp size={31}/></a>}
 
-    {notice && <div className="toast" role="status"><Check size={16}/>{notice}</div>}
     {cartOpen && <div className="drawer-layer"><div className="drawer-backdrop" onClick={() => setCartOpen(false)} /><aside className="cart-drawer" aria-label="Meu pedido"><div className="drawer-head"><div><span className="eyebrow">SELEÇÃO ESPECIAL</span><h2>Meu pedido <span>({count})</span></h2></div><button className="icon-button" aria-label="Fechar pedido" onClick={() => setCartOpen(false)}><X/></button></div>{lines.length ? <><div className="cart-lines">{lines.map(({ product, quantity }) => <div className="cart-line" key={product.id}><div className="cart-thumb">{product.image ? <Image src={product.image} alt="" fill sizes="75px" /> : <span>N</span>}</div><div className="cart-line-info"><h3>{product.title}</h3><span>{money(product.promoPrice ?? product.price)}</span><div className="quantity"><button onClick={() => changeQuantity(product.id, -1)} aria-label={`Diminuir ${product.title}`}>{quantity === 1 ? <Trash2 size={13}/> : <Minus size={13}/>}</button><b>{quantity}</b><button onClick={() => changeQuantity(product.id, 1)} aria-label={`Aumentar ${product.title}`}><Plus size={13}/></button></div></div><strong>{money((product.promoPrice ?? product.price) * quantity)}</strong></div>)}</div><div className="drawer-foot"><div className="total"><span>Total estimado</span><strong>{money(total)}</strong></div><p>Disponibilidade, entrega e pagamento serão confirmados no WhatsApp.</p>{phone ? <a className="button button-dark checkout" href={whatsappUrl} target="_blank" rel="noopener noreferrer">Enviar pelo WhatsApp <ArrowRight size={18}/></a> : <button className="button button-dark checkout" disabled>WhatsApp em configuração</button>}</div></> : <div className="cart-empty"><ShoppingBag size={40}/><h3>Seu pedido começa aqui.</h3><p>Escolha seus doces favoritos no catálogo.</p><a className="button button-dark" href="/produtos">Explorar os doces <ArrowRight size={16}/></a></div>}</aside></div>}
   </>;
 }
