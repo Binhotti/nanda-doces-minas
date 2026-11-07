@@ -26,7 +26,6 @@ export default function Storefront({ products, catalogPage = false }: { products
   const lines = cart.map((line) => ({ ...line, product: products.find((p) => p.id === line.id) })).filter((line) => line.product) as (CartLine & { product: Product })[];
   const count = lines.reduce((sum, line) => sum + line.quantity, 0);
   const total = lines.reduce((sum, line) => sum + (line.product.promoPrice ?? line.product.price) * line.quantity, 0);
-  const featured = products.find((p) => p.featured && p.image) ?? products.find((p) => p.image);
 
   function changeQuantity(id: number, delta: number) {
     setCart((current) => {
@@ -61,7 +60,7 @@ export default function Storefront({ products, catalogPage = false }: { products
     <main>
       {!catalogPage && <section className="hero" id="inicio">
         <div className="hero-copy"><div className="eyebrow"><span className="line" /> DOÇURA COM ALMA MINEIRA</div><h1>O sabor que <em>conquista</em> começa aqui.</h1><p>Doces feitos para transformar pequenos instantes em boas lembranças. Explore o catálogo, escolha seus favoritos e envie seu pedido com carinho.</p><div className="hero-actions"><a className="button button-dark" href="/produtos">Explorar os doces <ArrowRight size={17} /></a><a className="text-link" href="#historia">Conheça a Nanda <ArrowDown size={16} /></a></div><div className="hero-note"><span className="heart-scribble">♡</span><span>Feito com amor.<br/>Escolhido por você.</span></div></div>
-        <div className="hero-art"><div className="hero-art-inner">{featured ? <Image src={featured.image} alt={featured.title} fill sizes="(max-width: 760px) 70vw, 455px" loading="eager" fetchPriority="high" /> : <Image src="/brand/logo.webp" alt="Logo da Nanda Doces de Minas" fill sizes="(max-width: 760px) 70vw, 455px" loading="eager" fetchPriority="high" />}</div><span className="hero-art-caption">NANDA DOCES DE MINAS · SABOR QUE CONQUISTA</span></div>
+        <div className="hero-art"><div className="hero-art-inner"><Image src="/brand/logo.webp" alt="Logo da Nanda Doces de Minas" fill sizes="(max-width: 760px) 70vw, 455px" loading="eager" fetchPriority="high" /></div><span className="hero-art-caption">NANDA DOCES DE MINAS · SABOR QUE CONQUISTA</span></div>
       </section>}
 
       {!catalogPage && <section className="founder" id="historia">
