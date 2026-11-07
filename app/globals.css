@@ -275,3 +275,6 @@ footer { background: var(--paper); padding: 64px var(--gutter) 28px }
 .home-tag{display:inline-block;margin-top:6px;padding:2px 8px;border:1px solid #d9b377;color:#8a6430;font-style:normal;font-size:10px}.check-row input:disabled{cursor:not-allowed}.check-row input:disabled+span{opacity:.75}
 .upload-area:has(>img)::after{content:"Clique, arraste ou cole outra imagem para trocar";position:absolute;inset:auto 0 0;padding:8px;text-align:center;background:rgba(53,33,28,.78);color:#fff;font-size:11px;opacity:0;transition:opacity .2s;pointer-events:none}.upload-area:has(>img):hover::after{opacity:1}
 .admin-thumb{position:relative;overflow:hidden}
+.admin-meta{display:flex;align-items:center;gap:8px;margin-top:5px}.admin-product .admin-meta small{margin-top:0}.admin-meta .home-tag{margin:0}
+.admin-rows.scroll{max-height:calc(86px * 10);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#d9b377 transparent}
+@media(max-width:530px){.admin-rows.scroll{max-height:min(calc(86px * 10),70vh)}}
