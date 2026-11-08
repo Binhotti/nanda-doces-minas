@@ -361,3 +361,29 @@ i.out{background:#c0836f}
   .fin-chart{gap:4px}
   .fin-search{min-width:100%}
 }
+
+/* ===== Página do produto ===== */
+.product-link{position:absolute;inset:0;display:block}
+.product-card h3 a{color:inherit;transition:color .25s}
+.product-card h3 a:hover{color:var(--rose-deep)}
+.product-detail{padding:96px var(--gutter) 110px;min-height:70vh}
+.back-link{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:34px;transition:color .25s}
+.back-link:hover{color:var(--rose-deep)}
+.detail-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(36px,6vw,96px);align-items:start}
+.detail-image{position:relative;aspect-ratio:1/1;background:#fff;box-shadow:0 1px 0 rgba(120,80,60,.05),0 30px 60px -36px rgba(120,70,50,.45);overflow:hidden}
+.detail-image img{object-fit:contain;padding:36px}
+.detail-info{display:flex;flex-direction:column;gap:22px;padding-top:6px}
+.detail-info h1{font-size:clamp(40px,4.4vw,68px);line-height:1.04;letter-spacing:-.015em;margin:0}
+.detail-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 16px}
+.detail-price strong{font:500 44px var(--font-serif);color:var(--cocoa)}
+.detail-price s{font-size:18px;color:#a38f84}
+.detail-price em{font-style:normal;font-size:12px;color:#4f7a45;background:#edf4ea;padding:5px 11px;border-radius:999px}
+.detail-description{border-top:1px solid var(--line);padding-top:24px}
+.detail-description h2{font:600 22px var(--font-serif);margin:0 0 12px}
+.detail-description p{font-size:16px;line-height:1.8;color:var(--muted);margin:0;white-space:pre-line}
+.detail-add{height:56px;padding:0 30px;display:inline-flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--cocoa);background:var(--cocoa);color:#fff;font-size:15px;font-weight:500;align-self:flex-start;cursor:pointer;transition:background .25s,border-color .25s,transform .15s}
+.detail-add:hover{background:var(--rose-deep);border-color:var(--rose-deep)}
+.detail-add:active{transform:scale(.97)}
+.detail-note{font-size:12px;color:#9e897e;margin:0}
+@media(max-width:900px){.detail-grid{grid-template-columns:1fr}.product-detail{padding-top:72px}}
+@media(max-width:530px){.detail-add{width:100%;align-self:stretch}.detail-price strong{font-size:38px}.detail-image img{padding:20px}}
