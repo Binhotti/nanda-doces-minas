@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { ArrowDownCircle, ArrowUpCircle, ChartNoAxesCombined, Download, Pencil, Plus, Receipt, Save, Search, Trash2, X } from "lucide-react";
 import { CATEGORIES, PAYMENT_METHODS, isoDate, totals, type EntryType, type FinanceEntry, type FinanceInput } from "@/lib/finance-shared";
+import MoneyInput from "@/components/money-input";
+import { centsFromMoneyInput, moneyInputFromCents } from "@/lib/money-input";
 
 // A partir de quantos lançamentos a lista ganha rolagem própria (cada linha tem 86 px no CSS).
 const MAX_VISIBLE_ROWS = 10;
@@ -20,14 +22,6 @@ type TypeFilter = "all" | EntryType;
 
 const money = (cents: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
 const shortDate = (iso: string) => iso.split("-").reverse().join("/");
-
-/** Aceita "1234,56", "1.234,56", "R$ 12,5" ou "12.5". Devolve centavos ou NaN. */
-function parseMoney(text: string) {
-  const clean = text.replace(/[R$\s]/g, "");
-  const normalized = clean.includes(",") ? clean.replace(/\./g, "").replace(",", ".") : clean;
-  const value = Number(normalized);
-  return normalized !== "" && Number.isFinite(value) ? Math.round(value * 100) : NaN;
-}
 
 function rangeFor(period: Period, today: Date, from: string, to: string): [string, string] {
   const y = today.getFullYear(), m = today.getMonth();
@@ -108,7 +102,7 @@ export default function FinancePanel({ initialEntries }: { initialEntries: Finan
     setError("");
     setEditing(entry?.id ?? "new");
     setForm(entry ? { type: entry.type, date: entry.date, description: entry.description, category: entry.category, method: entry.method, note: entry.note } : blankForm(type));
-    setAmountText(entry ? (entry.amount / 100).toFixed(2).replace(".", ",") : "");
+    setAmountText(entry ? moneyInputFromCents(entry.amount) : "");
   }
   function changeType(type: EntryType) {
     setForm((current) => ({ ...current, type, category: CATEGORIES[type].includes(current.category) ? current.category : "" }));
@@ -116,7 +110,7 @@ export default function FinancePanel({ initialEntries }: { initialEntries: Finan
 
   async function save(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
-    const amount = parseMoney(amountText);
+    const amount = centsFromMoneyInput(amountText);
     if (!Number.isInteger(amount) || amount <= 0) { setError("Informe um valor maior que zero."); setBusy(false); return; }
     try {
       const response = await fetch(editing === "new" ? "/api/finance" : `/api/finance/${editing}`, { method: editing === "new" ? "POST" : "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, amount }) });
@@ -206,7 +200,7 @@ export default function FinancePanel({ initialEntries }: { initialEntries: Finan
               <button type="button" className={form.type === "out" ? "active out" : ""} aria-pressed={form.type === "out"} onClick={() => changeType("out")}><ArrowDownCircle size={18}/> Saída</button>
             </div>
             <div className="field-row">
-              <div className="field"><label htmlFor="fin-amount">Valor (R$) *</label><input id="fin-amount" required autoFocus inputMode="decimal" value={amountText} onChange={(e) => setAmountText(e.target.value)} placeholder="0,00"/></div>
+              <div className="field"><label htmlFor="fin-amount">Valor (R$) *</label><MoneyInput id="fin-amount" required autoFocus value={amountText} onValueChange={setAmountText} placeholder="0,00"/></div>
               <div className="field"><label htmlFor="fin-date">Data *</label><input id="fin-date" type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })}/></div>
             </div>
             <div className="field"><label htmlFor="fin-description">Descrição *</label><input id="fin-description" required maxLength={140} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={form.type === "in" ? "Ex.: Encomenda de 50 brigadeiros" : "Ex.: Compra de leite condensado"}/></div>
