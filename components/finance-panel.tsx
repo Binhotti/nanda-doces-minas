@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDownCircle, ArrowUpCircle, Download, Pencil, Plus, Receipt, Save, Search, Trash2, X } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ChartNoAxesCombined, Download, Pencil, Plus, Receipt, Save, Search, Trash2, X } from "lucide-react";
 import { CATEGORIES, PAYMENT_METHODS, isoDate, totals, type EntryType, type FinanceEntry, type FinanceInput } from "@/lib/finance-shared";
 
 // A partir de quantos lançamentos a lista ganha rolagem própria (cada linha tem 86 px no CSS).
@@ -92,6 +92,9 @@ export default function FinancePanel({ initialEntries }: { initialEntries: Finan
     });
     return { list, max: Math.max(1, ...list.flatMap((m) => [m.income, m.expense])) };
   }, [entries, today]);
+  const chartHasValues = months.list.some((month) => month.income > 0 || month.expense > 0);
+  const chartIncome = months.list.reduce((sum, month) => sum + month.income, 0);
+  const chartExpense = months.list.reduce((sum, month) => sum + month.expense, 0);
 
   const byCategory = (type: EntryType) => {
     const map = new Map<string, number>();
@@ -132,9 +135,9 @@ export default function FinancePanel({ initialEntries }: { initialEntries: Finan
     else setError("Não foi possível excluir o lançamento.");
   }
 
-  const breakdown = (title: string, data: { rows: [string, number][]; total: number }, tone: "in" | "out") => <div className="fin-card">
+  const breakdown = (title: string, data: { rows: [string, number][]; total: number }, tone: "in" | "out") => <div className={`fin-card fin-card-breakdown ${tone}`}>
     <h3>{title}</h3>
-    {data.rows.length ? <ul className="fin-breakdown">{data.rows.map(([name, value]) => <li key={name}><div><span>{name}</span><strong>{money(value)}</strong></div><i className={tone} style={{ width: `${Math.max(3, (value / data.total) * 100)}%` }} /></li>)}</ul> : <p className="fin-muted">Nada registrado neste período.</p>}
+    {data.rows.length ? <ul className="fin-breakdown">{data.rows.map(([name, value], index) => <li key={name}><div><span>{name}</span><strong>{money(value)}</strong></div><span className="fin-progress"><i className={tone} style={{ width: `${Math.max(3, (value / data.total) * 100)}%`, animationDelay: `${index * 90}ms` }} /></span></li>)}</ul> : <p className="fin-muted">Nada registrado neste período.</p>}
   </div>;
 
   return <main className="admin-main finance">
@@ -152,7 +155,7 @@ export default function FinancePanel({ initialEntries }: { initialEntries: Finan
       {period === "custom" && <div className="fin-range"><label>De<input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)}/></label><label>até<input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)}/></label></div>}
     </div>
 
-    <div className="admin-summary fin-summary">
+    <div className={`admin-summary fin-summary${summary.count ? " has-values" : ""}`}>
       <div><span>Entradas</span><strong className="pos">{money(summary.income)}</strong><small>{inPeriod.filter((e) => e.type === "in").length} lançamentos</small></div>
       <div><span>Saídas</span><strong className="neg">{money(summary.expense)}</strong><small>{inPeriod.filter((e) => e.type === "out").length} lançamentos</small></div>
       <div><span>Saldo do período</span><strong className={summary.balance < 0 ? "neg" : "pos"}>{money(summary.balance)}</strong><small>{summary.balance < 0 ? "Gastos maiores que as entradas" : "Entradas menos saídas"}</small></div>
@@ -160,14 +163,17 @@ export default function FinancePanel({ initialEntries }: { initialEntries: Finan
     </div>
 
     <div className="fin-grid">
-      <div className="fin-card">
-        <div className="fin-card-head"><h3>Últimos 6 meses</h3><div className="fin-legend"><span><i className="in"/>Entradas</span><span><i className="out"/>Saídas</span></div></div>
-        <div className="fin-chart" role="img" aria-label={`Entradas e saídas por mês: ${months.list.map((m) => `${m.label} entradas ${money(m.income)}, saídas ${money(m.expense)}`).join("; ")}`}>
-          {months.list.map((m) => <div className="fin-col" key={m.key} title={`${m.label}: entradas ${money(m.income)} · saídas ${money(m.expense)}`}>
-            <div className="fin-bars"><i className="in" style={{ height: `${(m.income / months.max) * 100}%` }}/><i className="out" style={{ height: `${(m.expense / months.max) * 100}%` }}/></div>
-            <span>{m.label}</span><small>{money(m.income - m.expense)}</small>
-          </div>)}
-        </div>
+      <div className={`fin-card fin-card-chart${chartHasValues ? " has-values" : ""}`}>
+        <div className="fin-card-head"><div><span className="fin-overline">EVOLUÇÃO MENSAL</span><h3>Últimos 6 meses</h3></div><div className="fin-legend"><span><i className="in"/>Entradas</span><span><i className="out"/>Saídas</span></div></div>
+        {chartHasValues ? <>
+          <div className="fin-chart" role="img" aria-label={`Entradas e saídas por mês: ${months.list.map((m) => `${m.label} entradas ${money(m.income)}, saídas ${money(m.expense)}`).join("; ")}`}>
+            {months.list.map((m, index) => <div className="fin-col" key={m.key} title={`${m.label}: entradas ${money(m.income)} · saídas ${money(m.expense)}`}>
+              <div className="fin-bars"><i className={`in${m.income ? " has-value" : ""}`} style={{ height: `${(m.income / months.max) * 100}%`, animationDelay: `${index * 80}ms` }}/><i className={`out${m.expense ? " has-value" : ""}`} style={{ height: `${(m.expense / months.max) * 100}%`, animationDelay: `${index * 80 + 100}ms` }}/></div>
+              <span>{m.label}</span><small>{money(m.income - m.expense)}</small>
+            </div>)}
+          </div>
+          <div className="fin-chart-totals"><div><span>Entradas no gráfico</span><strong className="pos">{money(chartIncome)}</strong></div><div><span>Saídas no gráfico</span><strong className="neg">{money(chartExpense)}</strong></div></div>
+        </> : <div className="fin-chart-empty"><span className="fin-empty-icon"><ChartNoAxesCombined size={30}/></span><strong>Ainda não há movimentos nos últimos 6 meses.</strong><p>Registre uma entrada ou saída para acompanhar a evolução aqui.</p></div>}
       </div>
       {breakdown("Entradas por categoria", incomeByCategory, "in")}
       {breakdown("Saídas por categoria", expenseByCategory, "out")}
