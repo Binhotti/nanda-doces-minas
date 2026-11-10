@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { ArrowDown, ArrowLeft, ArrowRight, Heart, Menu, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
@@ -12,19 +12,53 @@ type CartLine = { id: number; quantity: number };
 const phone = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 const money = (cents: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
 
+function ProductCard({ product, onAdd }: { product: Product; onAdd: (product: Product) => void }) {
+  return <article className="product-card"><div className="product-image"><a className="product-link" href={`/produtos/${product.id}`} aria-label={`Ver detalhes de ${product.title}`}>{product.image ? <Image src={product.image} alt={product.title} fill sizes="(max-width: 530px) 78vw, (max-width: 1000px) 42vw, 33vw" /> : <div className="product-image-empty"><span>♡</span>Nanda Doces de Minas</div>}</a>{product.promoPrice && <span className="product-badge">Oferta especial</span>}</div><div className="product-body"><div><span className="product-category">{product.category}</span><h3><a href={`/produtos/${product.id}`}>{product.title}</a></h3><p>{product.description}</p></div><div className="product-bottom"><div className="price">{product.promoPrice && <s>{money(product.price)}</s>}<strong>{money(product.promoPrice ?? product.price)}</strong></div><button className="add-to-cart" onClick={() => onAdd(product)} aria-label={`Adicionar ${product.title} ao carrinho`}><ShoppingBag size={16}/>Adicionar ao carrinho</button></div></div></article>;
+}
+
+function CategoryRail({ category, id, products, onAdd }: { category: string; id: string; products: Product[]; onAdd: (product: Product) => void }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ start: true, end: true });
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const updateEdges = () => setEdges({ start: track.scrollLeft <= 1, end: track.scrollLeft + track.clientWidth >= track.scrollWidth - 1 });
+    updateEdges();
+    track.addEventListener("scroll", updateEdges, { passive: true });
+    const observer = new ResizeObserver(updateEdges);
+    observer.observe(track);
+    return () => { track.removeEventListener("scroll", updateEdges); observer.disconnect(); };
+  }, [products.length]);
+
+  function scroll(direction: -1 | 1) {
+    const track = trackRef.current;
+    if (!track) return;
+    const card = track.querySelector<HTMLElement>(".product-card");
+    const distance = card ? card.getBoundingClientRect().width + parseFloat(getComputedStyle(track).columnGap || "0") : track.clientWidth;
+    track.scrollBy({ left: direction * distance, behavior: "smooth" });
+  }
+
+  return <section className="category-section" id={id} aria-labelledby={`${id}-title`}>
+    <div className="category-heading"><div><span className="kicker">Nanda Doces de Minas</span><h3 id={`${id}-title`}>{category}</h3></div><div className="category-controls"><button type="button" onClick={() => scroll(-1)} disabled={edges.start} aria-label={`Voltar produtos de ${category}`}><ArrowLeft size={19}/></button><button type="button" onClick={() => scroll(1)} disabled={edges.end} aria-label={`Avançar produtos de ${category}`}><ArrowRight size={19}/></button></div></div>
+    <div className="category-track" ref={trackRef} tabIndex={0} role="region" aria-label={`Produtos de ${category}`}>
+      {products.map((product) => <ProductCard key={product.id} product={product} onAdd={onAdd}/>)}
+    </div>
+  </section>;
+}
+
 export default function Storefront({ products, catalogPage = false, productId }: { products: Product[]; catalogPage?: boolean; productId?: number }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [category, setCategory] = useState("Todos");
   const detail = productId === undefined ? undefined : products.find((p) => p.id === productId);
   useEffect(() => {
     try { setCart(JSON.parse(localStorage.getItem("nanda-cart") || "[]")); } catch { /* ignore old cart */ }
   }, []);
   useEffect(() => { localStorage.setItem("nanda-cart", JSON.stringify(cart)); }, [cart]);
 
-  const categories = ["Todos", ...Array.from(new Set(products.map((p) => p.category)))];
-  const visible = catalogPage ? (category === "Todos" ? products : products.filter((p) => p.category === category)) : products.filter((p) => p.featured).slice(0, MAX_HOME_PRODUCTS);
+  const categories = Array.from(new Set(products.map((p) => p.category)));
+  const visible = products.filter((p) => p.featured).slice(0, MAX_HOME_PRODUCTS);
   const lines = cart.map((line) => ({ ...line, product: products.find((p) => p.id === line.id) })).filter((line) => line.product) as (CartLine & { product: Product })[];
   const count = lines.reduce((sum, line) => sum + line.quantity, 0);
   const total = lines.reduce((sum, line) => sum + (line.product.promoPrice ?? line.product.price) * line.quantity, 0);
@@ -70,8 +104,14 @@ export default function Storefront({ products, catalogPage = false, productId }:
       </section>}
 
       {detail ? <section className="product-detail" aria-labelledby="produto-titulo"><a className="back-link" href="/produtos"><ArrowLeft size={16}/> Voltar aos produtos</a><div className="detail-grid"><div className="detail-image">{detail.image ? <Image src={detail.image} alt={detail.title} fill sizes="(max-width: 900px) 100vw, 50vw" loading="eager" fetchPriority="high" /> : <div className="product-image-empty"><span>♡</span>Nanda Doces de Minas</div>}{detail.promoPrice && <span className="product-badge">Oferta especial</span>}</div><div className="detail-info"><span className="product-category">{detail.category}</span><h1 id="produto-titulo">{detail.title}</h1><div className="detail-price">{detail.promoPrice && <s>{money(detail.price)}</s>}<strong>{money(detail.promoPrice ?? detail.price)}</strong>{detail.promoPrice && <em>Você economiza {money(detail.price - detail.promoPrice)}</em>}</div>{detail.description && <div className="detail-description"><h2>Sobre este doce</h2><p>{detail.description}</p></div>}<button className="add-to-cart detail-add" onClick={() => addToCart(detail)}><ShoppingBag size={18}/>Adicionar ao carrinho</button><p className="detail-note">Disponibilidade, entrega e pagamento são combinados com a Nanda pelo WhatsApp.</p></div></div></section> : <section className={catalogPage ? "catalog catalog-page" : "catalog"} id="catalogo"><div className="catalog-heading"><div><span className="kicker">{catalogPage ? "Catálogo completo" : "Escolha seus favoritos"}</span><Title className="title-rule" lines={catalogPage ? ["Todos os nossos", <em key="e">doces.</em>] : ["Doces para", <em key="e">se encantar.</em>]} /></div><p>Explore o catálogo e monte seu pedido. A Nanda confirma todos os detalhes diretamente com você.</p></div>
-        {visible.length > 0 ? <>{catalogPage && <div className="category-list" role="tablist" aria-label="Categorias">{categories.map((item) => <button key={item} role="tab" aria-selected={category === item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div>}<div className="product-grid">{visible.map((product) => <article className="product-card" key={product.id}><div className="product-image"><a className="product-link" href={`/produtos/${product.id}`} aria-label={`Ver detalhes de ${product.title}`}>{product.image ? <Image src={product.image} alt={product.title} fill sizes="(max-width: 760px) 100vw, (max-width: 1000px) 50vw, 33vw" /> : <div className="product-image-empty"><span>♡</span>Nanda Doces de Minas</div>}</a>{product.promoPrice && <span className="product-badge">Oferta especial</span>}</div><div className="product-body"><div><span className="product-category">{product.category}</span><h3><a href={`/produtos/${product.id}`}>{product.title}</a></h3><p>{product.description}</p></div><div className="product-bottom"><div className="price">{product.promoPrice && <s>{money(product.price)}</s>}<strong>{money(product.promoPrice ?? product.price)}</strong></div><button className="add-to-cart" onClick={() => addToCart(product)} aria-label={`Adicionar ${product.title} ao carrinho`}><ShoppingBag size={16}/>Adicionar ao carrinho</button></div></div></article>)}</div></> : products.length > 0 ? <div className="catalog-empty"><div className="empty-monogram">N</div><div><span className="kicker">Catálogo completo</span><h3>Veja todos os nossos doces.</h3><p>Confira o catálogo completo e escolha seus favoritos.</p></div></div> : <div className="catalog-empty"><div className="empty-monogram">N</div><div><span className="kicker">Em preparação</span><h3>Algo doce está chegando.</h3><p>O catálogo será apresentado aqui em breve. Enquanto isso, a Nanda prepara cada detalhe com carinho.</p></div></div>}
-        {!catalogPage && <div className="catalog-more"><a className="button button-dark" href="/produtos">Ver mais produtos</a></div>}
+        {products.length > 0 ? catalogPage ? <>
+          <nav className="category-list" aria-label="Navegar pelas categorias">
+            {categories.map((item, index) => <a key={item} href={`#categoria-${index + 1}`}>{item}</a>)}
+          </nav>
+          <div className="category-sections">
+            {categories.map((item, index) => <CategoryRail key={item} id={`categoria-${index + 1}`} category={item} products={products.filter((product) => product.category === item)} onAdd={addToCart}/>)}
+          </div>
+        </> : visible.length > 0 ? <div className="product-grid">{visible.map((product) => <ProductCard key={product.id} product={product} onAdd={addToCart}/>)}</div> : <div className="catalog-empty"><div className="empty-monogram">N</div><div><span className="kicker">Catálogo completo</span><h3>Veja todos os nossos doces.</h3><p>Confira o catálogo completo e escolha seus favoritos.</p></div></div> : <div className="catalog-empty"><div className="empty-monogram">N</div><div><span className="kicker">Em preparação</span><h3>Algo doce está chegando.</h3><p>O catálogo será apresentado aqui em breve. Enquanto isso, a Nanda prepara cada detalhe com carinho.</p></div></div>}        {!catalogPage && <div className="catalog-more"><a className="button button-dark" href="/produtos">Ver mais produtos</a></div>}
       </section>}
 
       {!catalogPage && <section className="how" id="como-pedir"><div className="how-copy"><span className="kicker">Simples como deve ser</span><Title className="title-rule" lines={["Seu doce favorito,", <em key="e">a poucos passos.</em>]} /><p>Escolha com calma. O resto a gente conversa.</p></div><div className="how-steps"><div><span>01</span><h3>Explore</h3><p>Encontre seus doces favoritos no catálogo.</p></div><div><span>02</span><h3>Monte seu pedido</h3><p>Adicione os produtos e confira o total.</p></div><div><span>03</span><h3>Converse com a Nanda</h3><p>Envie o pedido completo pelo WhatsApp para confirmar os detalhes.</p></div></div></section>}
