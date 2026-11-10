@@ -166,7 +166,11 @@ footer { background: var(--paper); padding: 64px var(--gutter) 28px }
 .footer-main p { font-family: var(--font-serif); font-style: italic; font-size: 26px; color: var(--rose); margin: 0 }
 .footer-main > a:last-child { font-size: 14px }
 .footer-main > a:last-child:hover { color: var(--rose-deep) }
-.footer-bottom { display: flex; justify-content: space-between; color: #9b8a80; font-size: 13px; padding-top: 26px }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px 28px; color: #9b8a80; font-size: 13px; padding-top: 26px }
+.footer-credit { display: inline-flex; align-items: center; gap: 10px; margin-left: auto; white-space: nowrap }
+.footer-credit > a { position: relative; display: block; width: 160px; height: 56px; overflow: hidden; border-radius: 4px; transition: opacity .2s }
+.footer-credit > a:hover { opacity: .78 }
+.footer-credit img { object-fit: cover; mix-blend-mode: multiply }
 
 /* ---------- Carrinho ---------- */
 .drawer-layer, .modal-layer { position: fixed; inset: 0; z-index: 50 }
@@ -253,6 +257,8 @@ footer { background: var(--paper); padding: 64px var(--gutter) 28px }
   .footer-main { display: block }
   .footer-main p { margin: 26px 0 }
   .footer-bottom { display: block; line-height: 2 }
+  .footer-bottom > span { display: block }
+  .footer-credit { display: flex; margin: 14px 0 0 }
   .hero-actions { gap: 18px }
   .product-bottom { flex-wrap: wrap }
   .product-bottom .add-to-cart { flex: 1; justify-content: center }
