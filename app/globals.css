@@ -490,3 +490,31 @@ i.out{background:#c0836f}
 .product-grid .product-bottom{flex-wrap:wrap}
 @media(max-width:1000px){.product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.product-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* ===== Busca e paginação da lista de produtos ===== */
+.admin-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px 16px;flex-wrap:wrap;margin:0 0 16px}
+.admin-search{display:flex;align-items:center;gap:10px;flex:1 1 320px;max-width:420px;height:46px;padding:0 14px;background:#fff;border:1px solid var(--line);color:#9e897e;transition:border-color .2s,box-shadow .2s}
+.admin-search:focus-within{border-color:#c9a38f;box-shadow:0 0 0 3px rgba(185,138,78,.15)}
+.admin-search svg{flex:none}
+.admin-search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:inherit;font-size:13px;color:var(--ink);padding:0}
+.admin-search button{border:0;background:transparent;color:#8b7569;display:grid;place-items:center;padding:6px;margin-right:-6px;cursor:pointer}
+.admin-count{font-size:12px;color:#8a796f}
+.admin-pagination{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:18px;font-size:12px;color:#8a796f}
+.page-controls{display:flex;align-items:center;gap:6px}
+.page-controls button{min-width:38px;height:38px;padding:0 10px;border:1px solid var(--line);background:#fff;color:#6d5448;font:inherit;font-size:13px;cursor:pointer;display:grid;place-items:center}
+.page-controls button:hover:not(:disabled):not(.active){background:#f7ede6}
+.page-controls button.active{background:var(--cocoa);border-color:var(--cocoa);color:#fff;cursor:default}
+.page-controls button:disabled{opacity:.35;cursor:not-allowed}
+.page-gap{padding:0 4px;color:#9e897e}
+.page-short{display:none;padding:0 8px;white-space:nowrap;color:#6d5448}
+@media(max-width:530px){
+  .admin-search{max-width:none;flex-basis:100%}
+  .admin-search input{font-size:16px}
+  .page-controls .page-num,.page-controls .page-gap{display:none}
+  .page-controls .page-short{display:inline;flex:1;text-align:center}
+  .admin-pagination{flex-direction:column;align-items:stretch;text-align:center}
+  .page-controls{justify-content:space-between}
+  .page-controls button{min-width:46px;height:46px}
+}
+.admin-search{min-width:0}
+.admin-search input{width:100%}
