@@ -6,7 +6,10 @@ import { homeProductCount, listProducts, parseProductInput, saveProduct } from "
 export const runtime = "nodejs";
 
 export async function GET() {
-  return NextResponse.json(await listProducts(await isAdmin()));
+  const admin = await isAdmin();
+  const products = await listProducts(admin);
+  // Quem não é admin não recebe a quantidade em estoque, só se o produto está esgotado.
+  return NextResponse.json(admin ? products : products.map(({ stock, ...product }) => ({ ...product, soldOut: stock !== null && stock <= 0 })));
 }
 
 export async function POST(request: Request) {

@@ -2,6 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { get, put } from "@vercel/blob";
+import { MAX_STOCK } from "@/lib/stock";
 
 export type Product = {
   id: number;
@@ -13,6 +14,8 @@ export type Product = {
   category: string;
   featured: boolean;
   active: boolean;
+  /** Unidades disponíveis. null = estoque ilimitado (sem controle). */
+  stock: number | null;
   createdAt: string;
 };
 
@@ -26,7 +29,7 @@ async function readCloudProducts(): Promise<Product[]> {
   if (!result?.stream) return [];
   const products: unknown = await new Response(result.stream).json();
   if (!Array.isArray(products)) throw new Error("Catálogo armazenado inválido.");
-  return products as Product[];
+  return (products as Product[]).map((product) => ({ ...product, stock: product.stock ?? null }));
 }
 
 async function writeCloudProducts(products: Product[]) {
@@ -53,14 +56,18 @@ function db() {
       category TEXT NOT NULL DEFAULT 'Doces',
       featured INTEGER NOT NULL DEFAULT 0,
       active INTEGER NOT NULL DEFAULT 1,
+      stock INTEGER,
       createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`);
+    // Bancos criados antes do controle de estoque não têm a coluna.
+    const columns = database.prepare("PRAGMA table_info(products)").all() as { name: string }[];
+    if (!columns.some((column) => column.name === "stock")) database.exec("ALTER TABLE products ADD COLUMN stock INTEGER");
   }
   return database;
 }
 
 function normalize(row: Record<string, unknown>): Product {
-  return { ...row, featured: Boolean(row.featured), active: Boolean(row.active) } as Product;
+  return { ...row, featured: Boolean(row.featured), active: Boolean(row.active), stock: row.stock == null ? null : Number(row.stock) } as Product;
 }
 
 export async function listProducts(includeInactive = false): Promise<Product[]> {
@@ -93,15 +100,50 @@ export async function saveProduct(input: ProductInput, id?: number): Promise<Pro
     return product;
   }
   if (id) {
-    db().prepare(`UPDATE products SET title=?, description=?, image=?, price=?, promoPrice=?, category=?, featured=?, active=? WHERE id=?`).run(
-      input.title, input.description, input.image, input.price, input.promoPrice, input.category, Number(input.featured), Number(input.active), id
+    db().prepare(`UPDATE products SET title=?, description=?, image=?, price=?, promoPrice=?, category=?, featured=?, active=?, stock=? WHERE id=?`).run(
+      input.title, input.description, input.image, input.price, input.promoPrice, input.category, Number(input.featured), Number(input.active), input.stock, id
     );
     return (await getProduct(id))!;
   }
-  const result = db().prepare(`INSERT INTO products (title, description, image, price, promoPrice, category, featured, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(
-    input.title, input.description, input.image, input.price, input.promoPrice, input.category, Number(input.featured), Number(input.active)
+  const result = db().prepare(`INSERT INTO products (title, description, image, price, promoPrice, category, featured, active, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    input.title, input.description, input.image, input.price, input.promoPrice, input.category, Number(input.featured), Number(input.active), input.stock
   );
   return (await getProduct(Number(result.lastInsertRowid)))!;
+}
+
+/** Lê o estoque vindo do formulário: vazio = ilimitado (null), número inteiro de 0 a 99999. undefined = valor inválido. */
+export function parseStock(value: unknown): number | null | undefined {
+  if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) return null;
+  if (typeof value !== "number" && typeof value !== "string") return undefined;
+  const stock = Number(value);
+  return Number.isInteger(stock) && stock >= 0 && stock <= MAX_STOCK ? stock : undefined;
+}
+
+export async function setStock(id: number, stock: number | null): Promise<Product | null> {
+  if (onVercel) {
+    const products = await readCloudProducts();
+    const current = products.find((p) => p.id === id);
+    if (!current) return null;
+    const updated = { ...current, stock };
+    await writeCloudProducts(products.map((p) => p.id === id ? updated : p));
+    return updated;
+  }
+  db().prepare("UPDATE products SET stock = ? WHERE id = ?").run(stock, id);
+  return getProduct(id);
+}
+
+/** Soma ou subtrai unidades sem passar de 0 nem de MAX_STOCK. Só vale para produtos com estoque controlado. */
+export async function adjustStock(id: number, delta: number): Promise<Product | null> {
+  if (onVercel) {
+    const products = await readCloudProducts();
+    const current = products.find((p) => p.id === id);
+    if (!current || current.stock === null) return current ?? null;
+    const updated = { ...current, stock: Math.min(MAX_STOCK, Math.max(0, current.stock + delta)) };
+    await writeCloudProducts(products.map((p) => p.id === id ? updated : p));
+    return updated;
+  }
+  db().prepare("UPDATE products SET stock = MIN(?, MAX(0, stock + ?)) WHERE id = ? AND stock IS NOT NULL").run(MAX_STOCK, delta, id);
+  return getProduct(id);
 }
 
 export async function deleteProduct(id: number) {
@@ -122,6 +164,8 @@ export function parseProductInput(value: unknown): ProductInput | null {
   const price = Number(p.price);
   const promoPrice = p.promoPrice === "" || p.promoPrice == null ? null : Number(p.promoPrice);
   if (!title || !Number.isInteger(price) || price <= 0 || (promoPrice !== null && (!Number.isInteger(promoPrice) || promoPrice <= 0 || promoPrice >= price))) return null;
+  const stock = parseStock(p.stock);
+  if (stock === undefined) return null;
   if (image && !/^\/(uploads|api\/images)\/[a-zA-Z0-9._-]+$/.test(image)) return null;
-  return { title, description, category, image, price, promoPrice, featured: p.featured === true, active: p.active !== false };
+  return { title, description, category, image, price, promoPrice, featured: p.featured === true, active: p.active !== false, stock };
 }
