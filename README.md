@@ -39,3 +39,11 @@ npm run build
 ## Próximos passos
 
 Adicionar as fotos e os valores reais enviados pela cliente, tratar as imagens para fundo branco uniforme, revisar o texto com ela e escolher a hospedagem com armazenamento persistente.
+
+## Cópia de segurança
+
+Na Vercel, uma tarefa agendada (`vercel.json`) chama `/api/cron/backup` todos os dias de madrugada. A cópia do catálogo e do faturamento só é criada se a última tiver 3 dias ou mais, e fica no Blob em `backups/AAAA-MM-DD/`. As 10 mais recentes são mantidas (cerca de 30 dias). Se uma rodada falhar, ela tenta de novo no dia seguinte.
+
+- Configure a variável `CRON_SECRET` (um texto aleatório longo) nas variáveis de ambiente da Vercel. A Vercel a envia automaticamente nas chamadas agendadas; sem ela a rota recusa qualquer acesso.
+- Para testar na hora, chame `/api/cron/backup?force=1` com o cabeçalho `Authorization: Bearer <CRON_SECRET>`, ou use o botão de executar da tarefa no painel da Vercel.
+- Para restaurar, copie `backups/<data>/products.json` (ou `finance.json`) por cima de `catalog/products.json` (ou `catalog/finance.json`) no Blob.
